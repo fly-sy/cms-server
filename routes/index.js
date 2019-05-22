@@ -4,6 +4,23 @@ const path = require('path')
 
 const router = express.Router()
 
+const os = require('os');
+/**获取ip地址 */
+function getIPAdress() {
+  var interfaces = os.networkInterfaces();
+  for (var devName in interfaces) {
+    var iface = interfaces[devName];
+    for (var i = 0; i < iface.length; i++) {
+      var alias = iface[i];
+      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+        return alias.address;
+      }
+    }
+  }
+}
+const baseURL = getIPAdress();
+
+
 
 //创建数据库连接对象
 const mysql = require('mysql')
@@ -13,6 +30,8 @@ const conn = mysql.createConnection({
   password: 'root',
   database: 'mall'
 })
+
+
 
 
 // start product
@@ -80,10 +99,41 @@ router.get('/api/delall', (req, res) => {
 
 // 获取轮播图片地址
 router.get('/api/getlunbo', function (req, res, next) {
-  res.send({ status: 0, message: [{ "img": "http://127.0.0.1:5000/home/lunbo/1.jpg" }, { "img": "http://127.0.0.1:5000/home/lunbo/2.jpg" }] });
+
+  // 定义Sql语句
+  const sqlStr = 'select * from lunbo where isdel=0 order by id asc'
+  conn.query(sqlStr, (err, results) => {
+    results.forEach(item => {
+      if (item.img.length > 0) {
+        item.img = 'http://' + baseURL + ':5000' + item.img
+      }
+    })
+    if (err) return res.json({ status: 1, message: '获取轮播失败', affectedRows: 0 })
+    res.json({ status: 0, message: results, affectedRows: 0 })
+  })
 });
 
 // end home
+
+// start gird 
+
+// 获取轮播图片地址
+router.get('/api/girds', function (req, res, next) {
+
+  // 定义Sql语句
+  const sqlStr = 'select * from gird where isdel=0'
+  conn.query(sqlStr, (err, results) => {
+    results.forEach(item => {
+      if (item.src.length > 0) {
+        item.src = 'http://' + baseURL + ':5000' + item.src
+      }
+    })
+    if (err) return res.json({ status: 1, message: '获取轮播失败', affectedRows: 0 })
+    res.json({ status: 0, message: results, affectedRows: 0 })
+  })
+});
+
+// end gird 
 
 
 // start news
@@ -93,6 +143,11 @@ router.get('/api/getnewslist', (req, res) => {
   // 定义Sql语句
   const sqlStr = 'select * from news where isdel=0 order by id asc'
   conn.query(sqlStr, (err, results) => {
+    results.forEach(item => {
+      if (item.img_url.length > 0) {
+        item.img_url = 'http://' + baseURL + ':5000' + item.img_url
+      }
+    })
     console.log(err)
     if (err) return res.json({ status: 1, message: '获取数据失败', affectedRows: 0 })
     res.json({ status: 0, message: results, affectedRows: 0 })
@@ -201,7 +256,7 @@ router.get('/api/delcomments', (req, res) => {
 // end comments 
 
 
-// start share 
+// start photos 
 
 router.get('/api/getimgcategory', (req, res) => {
   // 定义Sql语句
@@ -227,6 +282,11 @@ router.get('/api/getimages/:class_id', (req, res) => {
 
   console.log(sqlStr)
   conn.query(sqlStr, (err, results) => {
+    results.forEach(item => {
+      if (item.img_url.length > 0) {
+        item.img_url = 'http://' + baseURL + ':5000' + item.img_url
+      }
+    })
     console.log(err)
     if (err) return res.json({ status: 1, message: '获取数据失败', affectedRows: 0 })
     res.json({ status: 0, message: results, affectedRows: 0 })
@@ -254,6 +314,11 @@ router.get('/api/getthumimages/:id', (req, res) => {
   const sqlStr = 'select * from `imgs_thumbs` where `thumbs_id`=?'
 
   conn.query(sqlStr, id, (err, results) => {
+    results.forEach(item => {
+      if (item.src.length > 0) {
+        item.src = 'http://' + baseURL + ':5000' + item.src
+      }
+    })
     console.log(results.length)
     // 执行Sql语句失败
     if (err) return res.json({ status: 1, message: '获取所缩略图失败', affectedRows: 0 })
@@ -291,7 +356,7 @@ router.get('/api/delimgs', (req, res) => {
   })
 })
 
-// end share 
+// end photos 
 
 // start goods 
 
@@ -321,6 +386,11 @@ router.get('/api/getgoods', (req, res) => {
   const sqlStr2 = 'SELECT count(*) FROM goods'
 
   conn.query(sqlStr, (err1, results1) => {
+    results1.forEach(item => {
+      if (item.img_url.length > 0) {
+        item.img_url = 'http://' + baseURL + ':5000' + item.img_url
+      }
+    })
     conn.query(sqlStr2, (err2, results2) => {
       if (err1) return res.json({ status: 1, message: '获取数据失败', affectedRows: 0 })
       res.json({ status: 0, count: results2[0]['count(*)'], message: results1, affectedRows: 0 })
