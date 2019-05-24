@@ -20,6 +20,8 @@ function getIPAdress() {
 }
 const baseURL = getIPAdress();
 
+console.log(`http://${baseURL}:5000`)
+
 
 
 //创建数据库连接对象
